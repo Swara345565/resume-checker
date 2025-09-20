@@ -28,7 +28,7 @@ Recruiters often spend countless hours manually reviewing resumes, leading to de
 - Streamlit → Interactive web interface for uploads and dashboards  
 
 **Deployment**
-- Streamlit Cloud / HuggingFace Spaces
+- Streamlit Cloud 
 
 ---
 
@@ -73,7 +73,7 @@ streamlit run app.py
 
 🌐 Live Web App
 
-[Streamlit/HuggingFace Link Here]
+https://team03toptechnerds.streamlit.app/
 
 👥 Team Members
 

@@ -1,63 +1,72 @@
-import fitz  # PyMuPDF for PDF
+import pdfplumber
 import docx2txt
 import re
 
-def extract_text_from_pdf(file_path):
+def extract_text(file):
     """
-    Extracts raw text from a PDF file.
+    Extract text from Streamlit UploadedFile (PDF or DOCX)
     """
-    doc = fitz.open(file_path)
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    return text
+    # PDF
+    if file.type == "application/pdf":
+        text = ""
+        with pdfplumber.open(file) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+        return text
 
-def extract_text_from_docx(file_path):
-    """
-    Extracts raw text from a DOCX file.
-    """
-    return docx2txt.process(file_path)
+    # DOCX
+    elif file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        # docx2txt requires a path, so write temp file
+        temp_path = "temp_jd.docx"
+        with open(temp_path, "wb") as f:
+            f.write(file.read())
+        return docx2txt.process(temp_path)
 
-def parse_jd_skills(jd_text):
+    else:
+        raise ValueError("Unsupported file type")
+
+def parse_jd(file):
     """
-    Extracts must-have and good-to-have skills from Job Description text.
-    Returns a dictionary:
+    Parse JD UploadedFile and return structured dict:
     {
-        "must_have": [skill1, skill2, ...],
-        "good_to_have": [skill1, skill2, ...]
+        "role": str,
+        "must_have_skills": [...],
+        "good_to_have_skills": [...],
+        "full_text": str
     }
     """
-    jd_text = jd_text.lower()
+    jd_text = extract_text(file)
+    jd_text_lower = jd_text.lower()
 
-    # Simple regex-based extraction (you can improve later)
+    # Role title: first line or first non-empty line
+    lines = [line.strip() for line in jd_text.split("\n") if line.strip()]
+    role = lines[0] if lines else "Unknown Role"
+
+    # Must-have skills
     must_have = []
+    for match in re.findall(r"(must have|required|essential)[:\-]?\s*(.*)", jd_text_lower):
+        skills = [s.strip().capitalize() for s in match[1].split(",") if s.strip()]
+        must_have.extend(skills)
+
+    # Good-to-have skills
     good_to_have = []
-
-    # Look for sections labeled 'must have' or 'required'
-    must_have_matches = re.findall(r"(must have|required|essential)[:\-]?\s*(.*)", jd_text)
-    for match in must_have_matches:
-        skills = match[1].split(",")
-        must_have.extend([s.strip() for s in skills if s.strip()])
-
-    # Look for sections labeled 'good to have' or 'optional'
-    good_matches = re.findall(r"(good to have|optional|nice to have)[:\-]?\s*(.*)", jd_text)
-    for match in good_matches:
-        skills = match[1].split(",")
-        good_to_have.extend([s.strip() for s in skills if s.strip()])
+    for match in re.findall(r"(good to have|optional|nice to have)[:\-]?\s*(.*)", jd_text_lower):
+        skills = [s.strip().capitalize() for s in match[1].split(",") if s.strip()]
+        good_to_have.extend(skills)
 
     return {
-        "must_have": must_have,
-        "good_to_have": good_to_have
+        "role": role,
+        "must_have_skills": must_have,
+        "good_to_have_skills": good_to_have,
+        "full_text": jd_text
     }
 
-# Example usage:
+# Example usage
 if __name__ == "__main__":
-    jd_file = "data/sample_jd.pdf"  # replace with your JD file path
-    if jd_file.endswith(".pdf"):
-        jd_text = extract_text_from_pdf(jd_file)
-    else:
-        jd_text = extract_text_from_docx(jd_file)
-
-    skills = parse_jd_skills(jd_text)
-    print("Must-Have Skills:", skills["must_have"])
-    print("Good-to-Have Skills:", skills["good_to_have"])
+    import streamlit as st
+    jd_file = st.file_uploader("Upload JD", type=["pdf", "docx"])
+    if jd_file:
+        jd_parsed = parse_jd(jd_file)
+        st.write(jd_parsed)
