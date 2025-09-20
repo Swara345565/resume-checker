@@ -1,19 +1,7 @@
-# Web app
-streamlit==1.38.0
-
-# PDF & DOCX parsing
-pdfplumber==0.9.0
-docx2txt==0.8
-
-# NLP & Matching
-rapidfuzz==3.9.7
-scikit-learn==1.5.2
-sentence-transformers==3.2.1
-torch==2.5.0
-
-# Database & Utils
-sqlalchemy==2.0.36
-pandas==2.2.3
-numpy==1.26.4
-nltk==3.9.1
-spacy==3.7.5
+streamlit
+pymupdf
+python-docx
+scikit-learn==1.3.0
+spacy==3.5.3
+blis==0.7.9
+sqlite-utils
