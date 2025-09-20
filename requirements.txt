@@ -1,7 +1,8 @@
 streamlit
-pymupdf
+pdfplumber
 python-docx
-scikit-learn==1.3.0
-spacy==3.5.3
-blis==0.7.9
-sqlite-utils
+docx2txt
+sentence-transformers
+rapidfuzz
+numpy
+pandas
